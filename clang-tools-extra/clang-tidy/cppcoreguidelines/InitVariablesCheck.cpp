@@ -26,7 +26,7 @@ InitVariablesCheck::InitVariablesCheck(StringRef Name,
     : ClangTidyCheck(Name, Context),
       IncludeStyle(utils::IncludeSorter::parseIncludeStyle(
           Options.getLocalOrGlobal("IncludeStyle", "llvm"))),
-      MathHeader(Options.get("MathHeader", "math.h")) {}
+      MathHeader(Options.get("MathHeader", "cmath")) {}
 
 void InitVariablesCheck::registerMatchers(MatchFinder *Finder) {
   std::string BadDecl = "badDecl";
@@ -76,15 +76,17 @@ void InitVariablesCheck::check(const MatchFinder::MatchResult &Result) {
   bool AddMathInclude = false;
 
   if (TypePtr->isIntegerType())
-    InitializationString = " = 0";
-  else if (TypePtr->isFloatingType()) {
-    InitializationString = " = NAN";
+    InitializationString = "{0}";
+  else if (TypePtr->isBooleanType()) {
+    InitializationString = "{false}";
+  } else if (TypePtr->isFloatingType()) {
+    InitializationString = "{NAN}";
     AddMathInclude = true;
   } else if (TypePtr->isAnyPointerType()) {
     if (getLangOpts().CPlusPlus11)
-      InitializationString = " = nullptr";
+      InitializationString = "{nullptr}";
     else
-      InitializationString = " = NULL";
+      InitializationString = "{NULL}";
   }
 
   if (InitializationString) {
