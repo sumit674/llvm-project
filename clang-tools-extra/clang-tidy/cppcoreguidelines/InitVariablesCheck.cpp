@@ -75,9 +75,11 @@ void InitVariablesCheck::check(const MatchFinder::MatchResult &Result) {
   const char *InitializationString = nullptr;
   bool AddMathInclude = false;
 
-  if (TypePtr->isIntegerType())
+  if (TypePtr->isBooleanType()) {
+    InitializationString = " = false";
+  } else if (TypePtr->isIntegerType()) {
     InitializationString = " = 0";
-  else if (TypePtr->isFloatingType()) {
+  } else if (TypePtr->isFloatingType()) {
     InitializationString = " = NAN";
     AddMathInclude = true;
   } else if (TypePtr->isAnyPointerType()) {
@@ -85,6 +87,11 @@ void InitVariablesCheck::check(const MatchFinder::MatchResult &Result) {
       InitializationString = " = nullptr";
     else
       InitializationString = " = NULL";
+  }
+
+  if (InitializationString && getLangOpts().CPlusPlus11) {
+    InitializationString = "{}";
+    AddMathInclude = false;
   }
 
   if (InitializationString) {
